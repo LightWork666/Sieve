@@ -12,30 +12,30 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: PyO3/maturin-action@v1
       with:
         manylinux: auto
         command: build
         args: --release --manifest-path python/pyproject.toml -o dist
     - name: Upload wheels
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-linux
         path: dist
 
   windows:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: PyO3/maturin-action@v1
       with:
         command: build
         args: --release --manifest-path python/pyproject.toml -o dist
     - name: Upload wheels
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-windows
         path: dist
 
   macos:
@@ -44,15 +44,15 @@ jobs:
       matrix:
         target: [x86_64, aarch64]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: PyO3/maturin-action@v1
       with:
         command: build
         args: --release --manifest-path python/pyproject.toml --target ${{ matrix.target }}-apple-darwin -o dist
     - name: Upload wheels
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-macos-${{ matrix.target }}
         path: dist
 
   publish:
@@ -63,11 +63,13 @@ jobs:
     permissions:
       id-token: write # Required for PyPI Trusted Publishing
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: wheels
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
       - name: Publish to PyPI
         uses: PyO3/maturin-action@v1
         with:
           command: upload
-          args: --skip-existing *
+          args: --skip-existing dist/*
